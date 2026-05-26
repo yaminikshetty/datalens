@@ -1,0 +1,1055 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: DataLens — AI-powered business intelligence API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: metrics
+    description: Business metric operations
+  - name: dashboards
+    description: Dashboard operations
+  - name: reports
+    description: Report operations
+  - name: kpi-targets
+    description: KPI target operations
+  - name: activity
+    description: Activity feed operations
+  - name: openai
+    description: OpenAI AI chat operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── Metrics ──────────────────────────────────────────────────────────
+  /metrics:
+    get:
+      operationId: listMetrics
+      tags: [metrics]
+      summary: List all metrics
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Metric"
+    post:
+      operationId: createMetric
+      tags: [metrics]
+      summary: Create a new metric
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetricInput"
+      responses:
+        "201":
+          description: Created metric
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Metric"
+
+  /metrics/summary:
+    get:
+      operationId: getMetricsSummary
+      tags: [metrics]
+      summary: Aggregated metrics summary — totals, averages, and category breakdown
+      responses:
+        "200":
+          description: Metrics summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsSummary"
+
+  /metrics/trends:
+    get:
+      operationId: getMetricsTrends
+      tags: [metrics]
+      summary: Time-series trend data for charts
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: days
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trend data points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendPoint"
+
+  /metrics/by-category:
+    get:
+      operationId: getMetricsByCategory
+      tags: [metrics]
+      summary: Metrics grouped by category with aggregates
+      responses:
+        "200":
+          description: Category breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryAggregate"
+
+  /metrics/{id}:
+    get:
+      operationId: getMetric
+      tags: [metrics]
+      summary: Get a single metric
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Metric
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Metric"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    patch:
+      operationId: updateMetric
+      tags: [metrics]
+      summary: Update a metric
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetricUpdate"
+      responses:
+        "200":
+          description: Updated metric
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Metric"
+    delete:
+      operationId: deleteMetric
+      tags: [metrics]
+      summary: Delete a metric
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Dashboards ────────────────────────────────────────────────────────
+  /dashboards:
+    get:
+      operationId: listDashboards
+      tags: [dashboards]
+      summary: List all dashboards
+      responses:
+        "200":
+          description: List of dashboards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Dashboard"
+    post:
+      operationId: createDashboard
+      tags: [dashboards]
+      summary: Create a new dashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DashboardInput"
+      responses:
+        "201":
+          description: Created dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+
+  /dashboards/overview:
+    get:
+      operationId: getDashboardOverview
+      tags: [dashboards]
+      summary: High-level overview stats for the main dashboard
+      responses:
+        "200":
+          description: Dashboard overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardOverview"
+
+  /dashboards/{id}:
+    get:
+      operationId: getDashboard
+      tags: [dashboards]
+      summary: Get a single dashboard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+    patch:
+      operationId: updateDashboard
+      tags: [dashboards]
+      summary: Update a dashboard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DashboardUpdate"
+      responses:
+        "200":
+          description: Updated dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+    delete:
+      operationId: deleteDashboard
+      tags: [dashboards]
+      summary: Delete a dashboard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Reports ───────────────────────────────────────────────────────────
+  /reports:
+    get:
+      operationId: listReports
+      tags: [reports]
+      summary: List all reports
+      responses:
+        "200":
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+    post:
+      operationId: createReport
+      tags: [reports]
+      summary: Create a new report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportInput"
+      responses:
+        "201":
+          description: Created report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Get a single report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    patch:
+      operationId: updateReport
+      tags: [reports]
+      summary: Update a report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportUpdate"
+      responses:
+        "200":
+          description: Updated report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    delete:
+      operationId: deleteReport
+      tags: [reports]
+      summary: Delete a report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── KPI Targets ───────────────────────────────────────────────────────
+  /kpi-targets:
+    get:
+      operationId: listKpiTargets
+      tags: [kpi-targets]
+      summary: List all KPI targets
+      responses:
+        "200":
+          description: List of KPI targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KpiTarget"
+    post:
+      operationId: createKpiTarget
+      tags: [kpi-targets]
+      summary: Create a KPI target
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KpiTargetInput"
+      responses:
+        "201":
+          description: Created KPI target
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KpiTarget"
+
+  /kpi-targets/{id}:
+    patch:
+      operationId: updateKpiTarget
+      tags: [kpi-targets]
+      summary: Update a KPI target
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KpiTargetUpdate"
+      responses:
+        "200":
+          description: Updated KPI target
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KpiTarget"
+    delete:
+      operationId: deleteKpiTarget
+      tags: [kpi-targets]
+      summary: Delete a KPI target
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Activity Feed ─────────────────────────────────────────────────────
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [activity]
+      summary: Recent activity feed across all entities
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Activity events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityEvent"
+
+  # ── OpenAI AI Chat ────────────────────────────────────────────────────
+  /openai/conversations:
+    get:
+      operationId: listOpenaiConversations
+      tags: [openai]
+      summary: List all AI conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OpenaiConversation"
+    post:
+      operationId: createOpenaiConversation
+      tags: [openai]
+      summary: Create a new AI conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenaiConversationInput"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiConversation"
+
+  /openai/conversations/{id}:
+    get:
+      operationId: getOpenaiConversation
+      tags: [openai]
+      summary: Get conversation with messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiConversationWithMessages"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteOpenaiConversation
+      tags: [openai]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /openai/conversations/{id}/messages:
+    get:
+      operationId: listOpenaiMessages
+      tags: [openai]
+      summary: List messages in a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OpenaiMessage"
+    post:
+      operationId: sendOpenaiMessage
+      tags: [openai]
+      summary: Send a message and receive a streaming AI response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenaiMessageInput"
+      responses:
+        "200":
+          description: SSE stream of assistant text chunks
+          content:
+            text/event-stream: {}
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    # ── Metric ──────────────────────────────────────────────────────────
+    Metric:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        value:
+          type: number
+        previousValue:
+          type: ["number", "null"]
+        unit:
+          type: string
+        category:
+          type: string
+        trend:
+          type: string
+          enum: [up, down, flat]
+        date:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - value
+        - unit
+        - category
+        - trend
+        - date
+        - createdAt
+
+    MetricInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        value:
+          type: number
+        previousValue:
+          type: ["number", "null"]
+        unit:
+          type: string
+        category:
+          type: string
+        trend:
+          type: string
+          enum: [up, down, flat]
+        date:
+          type: string
+          format: date-time
+      required:
+        - name
+        - value
+        - unit
+        - category
+        - trend
+
+    MetricUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+        previousValue:
+          type: ["number", "null"]
+        unit:
+          type: string
+        category:
+          type: string
+        trend:
+          type: string
+          enum: [up, down, flat]
+        date:
+          type: string
+          format: date-time
+
+    MetricsSummary:
+      type: object
+      properties:
+        totalMetrics:
+          type: integer
+        categoriesCount:
+          type: integer
+        avgValue:
+          type: number
+        upTrendCount:
+          type: integer
+        downTrendCount:
+          type: integer
+        flatTrendCount:
+          type: integer
+        topCategory:
+          type: string
+      required:
+        - totalMetrics
+        - categoriesCount
+        - avgValue
+        - upTrendCount
+        - downTrendCount
+        - flatTrendCount
+        - topCategory
+
+    TrendPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        category:
+          type: string
+        value:
+          type: number
+        count:
+          type: integer
+      required:
+        - date
+        - category
+        - value
+        - count
+
+    CategoryAggregate:
+      type: object
+      properties:
+        category:
+          type: string
+        count:
+          type: integer
+        total:
+          type: number
+        avg:
+          type: number
+        upCount:
+          type: integer
+        downCount:
+          type: integer
+      required:
+        - category
+        - count
+        - total
+        - avg
+        - upCount
+        - downCount
+
+    # ── Dashboard ────────────────────────────────────────────────────────
+    Dashboard:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+
+    DashboardInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+      required:
+        - name
+
+    DashboardUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    DashboardOverview:
+      type: object
+      properties:
+        totalDashboards:
+          type: integer
+        totalMetrics:
+          type: integer
+        totalReports:
+          type: integer
+        totalKpiTargets:
+          type: integer
+        kpiHealthPct:
+          type: number
+        recentMetricsCount:
+          type: integer
+        topPerformingCategory:
+          type: string
+      required:
+        - totalDashboards
+        - totalMetrics
+        - totalReports
+        - totalKpiTargets
+        - kpiHealthPct
+        - recentMetricsCount
+        - topPerformingCategory
+
+    # ── Report ───────────────────────────────────────────────────────────
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [performance, trend, comparison, summary]
+        category:
+          type: ["string", "null"]
+        data:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - type
+        - createdAt
+        - updatedAt
+
+    ReportInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        type:
+          type: string
+          enum: [performance, trend, comparison, summary]
+        category:
+          type: string
+        data:
+          type: string
+      required:
+        - title
+        - type
+
+    ReportUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [performance, trend, comparison, summary]
+        category:
+          type: string
+        data:
+          type: string
+
+    # ── KpiTarget ────────────────────────────────────────────────────────
+    KpiTarget:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        target:
+          type: number
+        current:
+          type: number
+        unit:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+          enum: [on_track, at_risk, behind, achieved]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - target
+        - current
+        - unit
+        - category
+        - status
+        - createdAt
+
+    KpiTargetInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        target:
+          type: number
+        current:
+          type: number
+        unit:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+          enum: [on_track, at_risk, behind, achieved]
+      required:
+        - name
+        - target
+        - current
+        - unit
+        - category
+        - status
+
+    KpiTargetUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        target:
+          type: number
+        current:
+          type: number
+        unit:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+          enum: [on_track, at_risk, behind, achieved]
+
+    # ── Activity ─────────────────────────────────────────────────────────
+    ActivityEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        entityType:
+          type: string
+        entityId:
+          type: integer
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - entityType
+        - entityId
+        - description
+        - createdAt
+
+    # ── OpenAI ───────────────────────────────────────────────────────────
+    OpenaiConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+
+    OpenaiConversationInput:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+
+    OpenaiConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/OpenaiMessage"
+      required:
+        - id
+        - title
+        - createdAt
+        - messages
+
+    OpenaiMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+
+    OpenaiMessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
